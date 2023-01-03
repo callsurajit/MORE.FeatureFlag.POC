@@ -1,0 +1,33 @@
+﻿{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:9846",
+      "sslPort": 44313
+    }
+  },
+  "profiles": {
+    "MORE.FeatureFlag.POC": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:7041;http://localhost:5041",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AppConfig": "Endpoint=https://more-config.azconfig.io;Id=lKTn-l0-s0:HsHl9P25f4WwSARe+F4H;Secret=q90lxhRPIJuiFACDLBslWGgRIa2UMpsAKsgCzIRqDuQ="
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger/index.html",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AppConfig": "Endpoint=https://more-config.azconfig.io;Id=lKTn-l0-s0:HsHl9P25f4WwSARe+F4H;Secret=q90lxhRPIJuiFACDLBslWGgRIa2UMpsAKsgCzIRqDuQ="
+      }
+    }
+  }
+}
