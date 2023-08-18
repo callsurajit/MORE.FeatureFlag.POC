@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
@@ -11,14 +11,14 @@
   "profiles": {
     "MORE.FeatureFlag.POC": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7041;http://localhost:5041",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AppConfig": "Endpoint=https://more-config.azconfig.io;Id=lKTn-l0-s0:HsHl9P25f4WwSARe+F4H;Secret=q90lxhRPIJuiFACDLBslWGgRIa2UMpsAKsgCzIRqDuQ="
-      }
+      },
+      "applicationUrl": "https://localhost:7041;http://localhost:5041",
+      "dotnetRunMessages": true
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -28,6 +28,13 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "AppConfig": "Endpoint=https://more-config.azconfig.io;Id=lKTn-l0-s0:HsHl9P25f4WwSARe+F4H;Secret=q90lxhRPIJuiFACDLBslWGgRIa2UMpsAKsgCzIRqDuQ="
       }
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger/index.html",
+      "publishAllPorts": true,
+      "useSSL": true
     }
   }
 }

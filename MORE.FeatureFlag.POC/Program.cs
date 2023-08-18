@@ -2,8 +2,11 @@ using Microsoft.FeatureManagement;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Azure.Identity;
+using Microsoft.Extensions.Configuration;
 using System.Text.Json.Serialization;
 using Microsoft.FeatureManagement.FeatureFilters;
+using MORE.FeatureFlag.POC.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,19 +20,24 @@ builder.Configuration.AddAzureAppConfiguration(options =>
                     options.Connect(connectionString).UseFeatureFlags());
 builder.Services.AddAzureAppConfiguration();
 
-builder.Services.AddControllers()
-                .AddJsonOptions(option =>
-                {
-                    option.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;  
-                });
+// Register SQL database configuration context as services.
+builder.Services.AddDbContext<MOREPOCContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddControllers();
+//                .AddJsonOptions(option =>
+//                {
+//                    option.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;  
+//                });
 
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Version = "v1",
-        Title = "POC - Feature Flag implementation using Azure",
-        Description = "Implementing the feature manager using Azure",
+        Title = "POC - Feature Flag implementation using Azure/Questionnaire",
+        Description = "Implementing the feature manager using Azure/Questionnaire",
         TermsOfService = new Uri("https://example.com/terms"),
         License = new OpenApiLicense
         {
