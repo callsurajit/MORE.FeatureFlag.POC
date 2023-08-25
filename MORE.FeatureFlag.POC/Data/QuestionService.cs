@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MORE.FeatureFlag.POC.Models;
+using System.Collections.ObjectModel;
 
 namespace MORE.FeatureFlag.POC.Data {
     public class QuestionService : IQuestionService {
@@ -28,15 +29,18 @@ namespace MORE.FeatureFlag.POC.Data {
                           }).ToListAsync();
         }
 
-        public async Task<QuestionTreeDto> GetDecisionTreeAsync() {
+        public async Task<List<QuestionLeaf>> GetDecisionTreeAsync() {
             List<int> processedQuestion = new List<int>();
-            var decisionTree = new QuestionTreeDto();
-            
-            // get the questionnaire details includes the metadata
-            var questionDetails = await GetQuestionsAsync();            
-            // get the list of all the questions without the metadata
-            var questionList = _context.Questions.OrderBy(x=> x.DisplayOrder).ToList();
-            var leafDict = new Dictionary<string, QuestionLeaf>();
+            //var decisionTree = new QuestionTreeDto();
+            var decisionTree = new List<QuestionLeaf>();           
+            // get the list of all the questions who are not children without the metadata
+            var questionList = (from c in _context.Questions
+                         where !(from o in _context.QuestionDependencys
+                                select o.ChildQuestionId)
+                               .Contains(c.Id)
+                        select c).ToList();
+
+            //var leafDict = new Dictionary<string, QuestionLeaf>();
             foreach (Question ques in questionList) {
                 // check if the questionId is already processed
                 if (processedQuestion.IndexOf(ques.Id) != -1)
@@ -44,10 +48,8 @@ namespace MORE.FeatureFlag.POC.Data {
 
                 // create the leaves for each question
                 var leaf = await createLeaves(ques, processedQuestion);
-                leafDict.Add(ques.Id.ToString(), leaf);
-                //decisionTree.QuestionLeaves.Add(leafDict);
-            }
-            decisionTree.QuestionLeaves.Add(leafDict);
+                decisionTree.Add(leaf);
+            }            
 
             return decisionTree;
         }
@@ -61,44 +63,40 @@ namespace MORE.FeatureFlag.POC.Data {
             leaf0.QuestionId = children[0].QuestionId;
             leaf0.QuestionName = children[0].QuestionName;
             leaf0.QuestionTypeName = children[0].QuestionTypeName;
+            leaf0.OptionValue = string.Empty;
             processedQuestion.Add(ques.Id);
 
             if (children.Count > 1) {
-                var leafleaf = new Dictionary<string, QuestionLeaf>();
                 foreach (QuestionDto quesdto in children) {
-                    QuestionLeaf leaf1 = null;
+                    QuestionLeaf leaf1 = new QuestionLeaf();
+                    leaf1.OptionValue = quesdto.QuestionValue;
+                    leaf1.QuestionName = string.Empty;
+                    leaf1.QuestionTypeName = string.Empty;
                     if (quesdto.ChildQuestionId != null) {
                         var childn2 = questionDetails.FindAll(x => x.QuestionId == quesdto.ChildQuestionId).ToList();
-                        leaf1 = new QuestionLeaf();
                         leaf1.QuestionId = childn2[0].QuestionId;
-                        leaf1.QuestionName = childn2[0].QuestionName;
+                        leaf1.QuestionName = childn2[0].QuestionName; 
                         leaf1.QuestionTypeName = childn2[0].QuestionTypeName;
                         processedQuestion.Add(childn2[0].QuestionId);
                         if (childn2.Count > 1) {
                             foreach (QuestionDto quesn2 in childn2) {
-                                var leafleafn2 = new Dictionary<string, QuestionLeaf>();
-                                QuestionLeaf leaf2 = null;
+                                QuestionLeaf leaf2 = new QuestionLeaf();
+                                leaf2.QuestionName = string.Empty;
+                                leaf2.QuestionTypeName = string.Empty;
+                                leaf2.OptionValue = quesn2.QuestionValue;
                                 if (quesn2.ChildQuestionId != null) {
                                     var childn3 = questionDetails.FindAll(x => x.QuestionId == quesn2.ChildQuestionId).ToList();
-                                    leaf2 = new QuestionLeaf();
                                     leaf2.QuestionId = childn3[0].QuestionId;
                                     leaf2.QuestionName = childn3[0].QuestionName;
                                     leaf2.QuestionTypeName = childn3[0].QuestionTypeName;
                                     processedQuestion.Add(childn3[0].QuestionId);
-
-                                    leafleafn2.Add(quesn2.QuestionValue, leaf2);
-                                    leaf1.QuestionLeaves.Add(leafleafn2);
                                 }
-                                else {
-                                    leafleafn2.Add(quesn2.QuestionValue, leaf2);
-                                    leaf1.QuestionLeaves.Add(leafleafn2);
-                                }
+                                leaf1.QuestionLeaves.Add(leaf2);
                             }
                         }
                     }
-                    leafleaf.Add(quesdto.QuestionValue, leaf1);
+                    leaf0.QuestionLeaves.Add(leaf1);
                 }
-                leaf0.QuestionLeaves.Add(leafleaf);
             }
 
             return leaf0;
@@ -142,6 +140,26 @@ namespace MORE.FeatureFlag.POC.Data {
         //        return leaf;
         //    }
         //}
+
+        public async Task<QuestionRequestDto> GetQuestionByIdAsync(int questionId) {
+            var quesReqDto = new QuestionRequestDto();
+            var ques = _context.Questions.Where(x=> x.Id == questionId).First();
+
+            if (ques != null) {
+                quesReqDto.QuestionId = ques.Id;
+                quesReqDto.QuestionTypeId = ques.QuestionTypeId;
+                quesReqDto.QuestionName = ques.QuestionName;
+                quesReqDto.DisplayOrder = ques.DisplayOrder;
+            }
+
+            var questionDto = _context.QuestionDependencys.Where(x => x.QuestionId == questionId).ToList();
+
+            if (questionDto != null && questionDto.Count > 0) {
+                quesReqDto.QuestionDependencyList = questionDto;
+            }
+
+            return quesReqDto;
+        }
 
         public async Task<bool> UpdateQuestionsAsync(QuestionRequestDto questionRequest) {
             if(questionRequest.QuestionId  > 0) {
@@ -187,6 +205,53 @@ namespace MORE.FeatureFlag.POC.Data {
             _context.SaveChanges();
 
             return true;
+        }
+
+        public async Task<bool> AddDeleteOptionAsync(OptionRequestDto optionRequest) {
+            if (optionRequest.OperationId == 1) {
+                var quesDependency = new QuestionDependency();
+                quesDependency.QuestionId = optionRequest.QuestionId;
+                quesDependency.QuestionValue = optionRequest.Optionvalue;
+                if(optionRequest.ChildQuestionId > 0)
+                    quesDependency.ChildQuestionId = optionRequest.ChildQuestionId;
+                _context.QuestionDependencys.Add(quesDependency);
+                _context.SaveChanges();
+
+                return true;
+            }
+            else {
+                var quesOption = _context.QuestionDependencys.Where(x => x.QuestionId == optionRequest.QuestionId
+                                        && x.QuestionValue.ToLower() == optionRequest.Optionvalue.ToLower()).FirstOrDefault();
+                if (quesOption != null) {
+                    _context.QuestionDependencys.Remove(quesOption);
+                    _context.SaveChanges();
+                }
+
+                return true;
+            }
+        }
+
+        public async Task<bool> AddDeleteQuestionAsync(Question question) {
+            if(question.Id > 0) {
+                var ques = _context.Questions.Where(x => x.Id == question.Id).FirstOrDefault();
+                if (ques != null) {
+                    _context.Questions.Remove(ques);
+                    _context.SaveChanges();
+                }
+
+                return true;
+            }
+            else {
+                var ques = new Question();
+                ques.Id = question.Id;
+                ques.QuestionTypeId = question.QuestionTypeId;
+                ques.QuestionName = question.QuestionName;
+                ques.DisplayOrder = question.DisplayOrder;              
+                _context.Questions.Add(ques);
+                _context.SaveChanges();
+
+                return true;
+            }
         }
     }
 }

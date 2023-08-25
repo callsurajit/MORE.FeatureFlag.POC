@@ -9,7 +9,7 @@ namespace MORE.FeatureFlag.POC.Models
     public class QuestionLeaf
     {
         public QuestionLeaf() {
-            this.QuestionLeaves = new List<IDictionary<string, QuestionLeaf>>();
+            this.QuestionLeaves = new List<QuestionLeaf>() ;
         }
 
         [Key]
@@ -17,8 +17,7 @@ namespace MORE.FeatureFlag.POC.Models
         public string QuestionTypeName { get; set; }
         public string QuestionName { get; set; }
         //public int DisplayOrder { get; set; }
-        //public string QuestionValue { get; set; }
-        //public ICollection<QuestionLeaf> QuestionLeaves { get; set; }
-        public ICollection<IDictionary<string, QuestionLeaf>> QuestionLeaves { get; set; }
+        public string OptionValue { get; set; }
+        public ICollection<QuestionLeaf> QuestionLeaves { get; set; }
     }
 }

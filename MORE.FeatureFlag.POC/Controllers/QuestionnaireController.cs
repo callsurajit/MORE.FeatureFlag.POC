@@ -26,9 +26,24 @@ namespace MORE.FeatureFlag.POC.Controllers {
             return Ok(await _questionService.GetDecisionTreeAsync());
         }
 
+        [HttpGet("getquestionbyId/{questionId}")]
+        public async Task<IActionResult> GetQuestionById(int questionId) {
+            return Ok(await _questionService.GetQuestionByIdAsync(questionId));
+        }
+
         [HttpPost("updatequestions")]
         public async Task<bool> UpdateQuestions(QuestionRequestDto questionRequest) {
             return await _questionService.UpdateQuestionsAsync(questionRequest);
+        }
+
+        [HttpPost("adddeleteoption")]
+        public async Task<bool> AddDeleteOption(OptionRequestDto optionRequest) {
+            return await _questionService.AddDeleteOptionAsync(optionRequest);
+        }
+
+        [HttpPost("adddeletequestion")]
+        public async Task<bool> AddDeleteQuestion(Question question) {
+            return await _questionService.AddDeleteQuestionAsync(question);
         }
     }
 }

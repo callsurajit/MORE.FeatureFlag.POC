@@ -16,8 +16,8 @@ builder.Services.AddFeatureManagement()
 // Retrieve the app config connection string
 var connectionString = Environment.GetEnvironmentVariable("AppConfig");
 // Load configuration from Azure App Configuration
-builder.Configuration.AddAzureAppConfiguration(options =>
-                    options.Connect(connectionString).UseFeatureFlags());
+//builder.Configuration.AddAzureAppConfiguration(options =>
+//                    options.Connect(connectionString).UseFeatureFlags());
 builder.Services.AddAzureAppConfiguration();
 
 // Register SQL database configuration context as services.
@@ -57,7 +57,7 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseHttpsRedirection();
-app.UseAzureAppConfiguration();
+//app.UseAzureAppConfiguration();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
